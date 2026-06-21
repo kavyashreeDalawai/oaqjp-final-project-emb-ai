@@ -19,35 +19,20 @@ def emotion_detector(text_to_analyze):
 
 # Send a POST request to the API with the text and headers return response.text 
     response = requests.post(url, json = myobj, headers=header)
-    if response.status_code == 400:
-        return {
-            'anger': None,
-            'disgust': None,
-            'fear': None,
-            'joy': None,
-            'sadness': None,
-            'dominant_emotion': None
-        }
-    formatted_response = json.loads(response.text)
-        # Handle both nested list formats and flat formats safely
-    if isinstance(formatted_response.get('emotionPredictions'), list):
-        emotion_predictions = formatted_response['emotionPredictions'][0]['emotion']
-    else:
-        emotion_predictions = formatted_response['emotionPredictions']['emotion']
-    
-    anger_score = emotion_predictions['anger']
-    disgust_score = emotion_predictions['disgust']
-    fear_score = emotion_predictions['fear']
-    joy_score = emotion_predictions['joy']
-    sadness_score = emotion_predictions['sadness']
+    status_code = response.status_code
 
-    dominant_emotion = max(emotion_predictions, key=emotion_predictions.get)
+    emotions = {}
 
-    return {
-        'anger': anger_score,
-        'disgust': disgust_score,
-        'fear': fear_score,
-        'joy': joy_score,
-        'sadness': sadness_score,
-        'dominant_emotion': dominant_emotion
-    }
+    if status_code == 200:
+        formatted_response = json.loads(response.text)
+        emotions = formatted_response['emotionPredictions'][0]['emotion']
+        dominant_emotion = max(emotions.items(), key=lambda x: x[1])
+        emotions['dominant_emotion'] = dominant_emotion[0]
+    elif status_code == 400:
+        emotions['anger'] = None
+        emotions['disgust'] = None
+        emotions['fear'] = None
+        emotions['joy'] = None
+        emotions['sadness'] = None
+        emotions['dominant_emotion'] = None
+    return emotions
